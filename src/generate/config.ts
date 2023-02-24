@@ -8,23 +8,8 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type * as pg from 'pg';
 
+import { TsNameTransforms, nullTransforms, snakeCamelTransforms } from '../db/core';
 
-export interface RequiredConfig {
-  db: pg.ClientConfig;
-}
-
-export interface OptionalConfig {
-  outDir: string;
-  outExt: string;
-  schemas: SchemaRules;
-  debugListener: boolean | ((s: string) => void);
-  progressListener: boolean | ((s: string) => void);
-  warningListener: boolean | ((s: string) => void);
-  customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
-  columnOptions: ColumnOptions;
-  schemaJSDoc: boolean;
-  unprefixedSchema: string | null;
-}
 
 interface SchemaRules {
   [schema: string]: {
@@ -42,8 +27,26 @@ interface ColumnOptions {
   };
 }
 
+export interface RequiredConfig {
+  db: pg.ClientConfig;
+}
+
+export interface OptionalConfig {
+  outDir: string;
+  outExt: string;
+  schemas: SchemaRules;
+  debugListener: boolean | ((s: string) => void);
+  progressListener: boolean | ((s: string) => void);
+  warningListener: boolean | ((s: string) => void);
+  customTypesTransform: 'PgMy_type' | 'my_type' | 'PgMyType' | ((s: string) => string);
+  columnOptions: ColumnOptions;
+  schemaJSDoc: boolean;
+  unprefixedSchema: string | null;
+  nameTransforms: TsNameTransforms | boolean;
+}
+
 export type Config = RequiredConfig & Partial<OptionalConfig>;
-export type CompleteConfig = RequiredConfig & OptionalConfig;
+export type CompleteConfig = RequiredConfig & OptionalConfig & { nameTransforms: TsNameTransforms };
 
 const defaultConfig: OptionalConfig = {
   outDir: '.',
@@ -56,6 +59,19 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
+  nameTransforms: false,
+};
+
+export const finaliseConfig = (config: Config) => {
+  const finalConfig = { ...defaultConfig, ...config };
+
+  finalConfig.nameTransforms =
+    finalConfig.nameTransforms === false ? nullTransforms.ts :
+      finalConfig.nameTransforms === true ? snakeCamelTransforms.ts :
+        finalConfig.nameTransforms;
+
+  if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
+  return finalConfig as CompleteConfig;
 };
 
 export const moduleRoot = () => {
@@ -64,10 +80,4 @@ export const moduleRoot = () => {
   return fs.existsSync(path.join(parentDir, 'package.json')) ?
     parentDir :
     path.join(parentDir, '..');
-};
-
-export const finaliseConfig = (config: Config) => {
-  const finalConfig = { ...defaultConfig, ...config };
-  if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
-  return finalConfig as CompleteConfig;
 };
