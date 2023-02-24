@@ -1,5 +1,5 @@
-import { SQLFragment } from './core';
-import type { Whereable } from 'zapatos/schema';
+import { SQLFragment } from "./core";
+import type { Whereable } from "../typings/zapatos/schema";
 export declare const isNull: SQLFragment<boolean, never>;
 export declare const isNotNull: SQLFragment<boolean, never>;
 export declare const isTrue: SQLFragment<boolean, never>;
@@ -35,8 +35,8 @@ export declare const isNotIn: <T>(a: readonly T[]) => SQLFragment<any[], never> 
 export declare const or: <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) => SQLFragment<boolean | null, T>;
 export declare const and: <T>(...conditions: Whereable[] | SQLFragment<any, T>[]) => SQLFragment<boolean | null, T>;
 export declare const not: <T>(condition: Whereable | SQLFragment<any, T>) => SQLFragment<boolean | null, T>;
-type PluralisingIntervalUnit = 'microsecond' | 'millisecond' | 'second' | 'minute' | 'hour' | 'day' | 'week' | 'month' | 'year' | 'decade';
-type IntervalUnit = PluralisingIntervalUnit | `${PluralisingIntervalUnit}s` | 'century' | 'centuries' | 'millennium' | 'millennia';
+type PluralisingIntervalUnit = "microsecond" | "millisecond" | "second" | "minute" | "hour" | "day" | "week" | "month" | "year" | "decade";
+type IntervalUnit = PluralisingIntervalUnit | `${PluralisingIntervalUnit}s` | "century" | "centuries" | "millennium" | "millennia";
 export declare const fromNow: (n: number, unit?: IntervalUnit) => SQLFragment<any[], never>;
 export declare const after: <T>(a: T) => SQLFragment<boolean | null, T>;
 export declare const before: <T>(a: T) => SQLFragment<boolean | null, T>;

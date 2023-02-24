@@ -8,7 +8,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.subtract = exports.add = exports.now = exports.before = exports.after = exports.fromNow = exports.not = exports.and = exports.or = exports.isNotIn = exports.isIn = exports.notReImatch = exports.notReMatch = exports.reImatch = exports.reMatch = exports.notSimilarTo = exports.similarTo = exports.notIlike = exports.ilike = exports.notLike = exports.like = exports.notBetweenSymmetric = exports.notBetween = exports.betweenSymmetric = exports.between = exports.lte = exports.lt = exports.gte = exports.gt = exports.ne = exports.eq = exports.isNotDistinctFrom = exports.isDistinctFrom = exports.isNotUnknown = exports.isUnknown = exports.isNotFalse = exports.isFalse = exports.isNotTrue = exports.isTrue = exports.isNotNull = exports.isNull = void 0;
 const core_1 = require("./core");
 const utils_1 = require("./utils");
-const conditionalParam = (a) => a instanceof core_1.SQLFragment || a instanceof core_1.ParentColumn || a instanceof core_1.Parameter ? a : (0, core_1.param)(a);
+const conditionalParam = (a) => a instanceof core_1.SQLFragment ||
+    a instanceof core_1.ParentColumn ||
+    a instanceof core_1.Parameter
+    ? a
+    : (0, core_1.param)(a);
 exports.isNull = (0, core_1.sql) `${core_1.self} IS NULL`;
 exports.isNotNull = (0, core_1.sql) `${core_1.self} IS NOT NULL`;
 exports.isTrue = (0, core_1.sql) `${core_1.self} IS TRUE`;
@@ -61,17 +65,21 @@ const notReMatch = (a) => (0, core_1.sql) `${core_1.self} !~ ${conditionalParam(
 exports.notReMatch = notReMatch;
 const notReImatch = (a) => (0, core_1.sql) `${core_1.self} !~* ${conditionalParam(a)}`;
 exports.notReImatch = notReImatch;
-const isIn = (a) => a.length > 0 ? (0, core_1.sql) `${core_1.self} IN (${(0, core_1.vals)(a)})` : (0, core_1.sql) `false`;
+const isIn = (a) => a.length > 0
+    ? (0, core_1.sql) `${core_1.self} IN (${(0, core_1.vals)(a)})`
+    : (0, core_1.sql) `false`;
 exports.isIn = isIn;
-const isNotIn = (a) => a.length > 0 ? (0, core_1.sql) `${core_1.self} NOT IN (${(0, core_1.vals)(a)})` : (0, core_1.sql) `true`;
+const isNotIn = (a) => a.length > 0
+    ? (0, core_1.sql) `${core_1.self} NOT IN (${(0, core_1.vals)(a)})`
+    : (0, core_1.sql) `true`;
 exports.isNotIn = isNotIn;
-const or = (...conditions) => (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conditions, (0, core_1.sql) ` OR `, c => c)})`;
+const or = (...conditions) => (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conditions, (0, core_1.sql) ` OR `, (c) => c)})`;
 exports.or = or;
-const and = (...conditions) => (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conditions, (0, core_1.sql) ` AND `, c => c)})`;
+const and = (...conditions) => (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conditions, (0, core_1.sql) ` AND `, (c) => c)})`;
 exports.and = and;
 const not = (condition) => (0, core_1.sql) `(NOT ${condition})`;
 exports.not = not;
-const fromNow = (n, unit = 'millisecond') => (0, core_1.sql) `now() + ${(0, core_1.param)(String(n) + ' ' + unit)}`;
+const fromNow = (n, unit = "millisecond") => (0, core_1.sql) `now() + ${(0, core_1.param)(String(n) + " " + unit)}`;
 exports.fromNow = fromNow;
 exports.after = exports.gt;
 exports.before = exports.lt;
