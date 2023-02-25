@@ -1,5 +1,5 @@
 import { SQLFragment } from "./core";
-import type { Whereable } from "../typings/zapatos/schema";
+import type { Whereable } from "zapatos/schema";
 export declare const isNull: SQLFragment<boolean, never>;
 export declare const isNotNull: SQLFragment<boolean, never>;
 export declare const isTrue: SQLFragment<boolean, never>;

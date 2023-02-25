@@ -1,7 +1,7 @@
 /// <reference types="node" />
 import type * as pg from "pg";
 import { NoInfer } from "./utils";
-import type { Updatable, Whereable, Table, Column } from "../typings/zapatos/schema";
+import type { Updatable, Whereable, Table, Column } from "zapatos/schema";
 export interface TsNameTransforms {
     fromPgToTs: (s: string) => string;
     fromTsToPg: (s: string) => string;

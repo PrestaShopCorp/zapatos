@@ -8,12 +8,7 @@ import type * as pg from "pg";
 
 import { isPOJO, mapWithSeparator, NoInfer, noop } from "./utils";
 
-import type {
-  Updatable,
-  Whereable,
-  Table,
-  Column,
-} from "../typings/zapatos/schema";
+import type { Updatable, Whereable, Table, Column } from "zapatos/schema";
 
 const timing =
   typeof performance === "object" ? () => performance.now() : () => Date.now();

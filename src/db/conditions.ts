@@ -16,7 +16,7 @@ import {
 } from "./core";
 
 import { mapWithSeparator } from "./utils";
-import type { Whereable } from "../typings/zapatos/schema";
+import type { Whereable } from "zapatos/schema";
 
 const conditionalParam = (a: any) =>
   a instanceof SQLFragment ||
