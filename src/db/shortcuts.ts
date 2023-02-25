@@ -17,7 +17,7 @@ import type {
   Whereable,
   Table,
   Column,
-} from "../typings/zapatos/schema";
+} from "zapatos/schema";
 
 import {
   AllType,

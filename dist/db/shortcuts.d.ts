@@ -1,4 +1,4 @@
-import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from "../typings/zapatos/schema";
+import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from "zapatos/schema";
 import { AllType, SQLFragment } from "./core";
 import { NoInfer } from "./utils";
 export type JSONOnlyColsForTable<T extends Table, C extends any[]> = Pick<JSONSelectableForTable<T>, C[number]>;
