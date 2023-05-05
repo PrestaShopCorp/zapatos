@@ -212,7 +212,9 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
             ? columns
                 ? (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${(0, core_1.cols)(columns)})`
                 : (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${alias}.*)`
-            : SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric
+            : options.valueOnly
+                ? (0, core_1.sql) `${columns[0]}`
+                : SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric
         ? []
         : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric
         ? []

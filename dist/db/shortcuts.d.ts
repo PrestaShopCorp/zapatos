@@ -136,6 +136,7 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnsOption<
     having?: WhereableForTable<T> | SQLFragment<any>;
     lateral?: L;
     alias?: A;
+    valueOnly?: boolean;
     lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 }
 type SelectReturnTypeForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>> = undefined extends L ? ReturningTypeForTable<T, C, E> : L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> : L extends SQLFragment<any> ? RunResultForSQLFragment<L> : never;

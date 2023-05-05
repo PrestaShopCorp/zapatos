@@ -41,6 +41,8 @@ export const isNotDistinctFrom = <T>(a: T) =>
 
 export const eq = <T>(a: T) =>
   sql<SQL, boolean | null, T>`${self} = ${conditionalParam(a)}`;
+export const eqSQLValue = <T>(a: T) =>
+  sql<SQL, boolean | null, T>`${self} = (${conditionalParam(a)})`;
 export const ne = <T>(a: T) =>
   sql<SQL, boolean | null, T>`${self} <> ${conditionalParam(a)}`;
 export const gt = <T>(a: T) =>

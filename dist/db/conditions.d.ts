@@ -11,6 +11,7 @@ export declare const isNotUnknown: SQLFragment<boolean, never>;
 export declare const isDistinctFrom: <T>(a: T) => SQLFragment<boolean, T>;
 export declare const isNotDistinctFrom: <T>(a: T) => SQLFragment<boolean, T>;
 export declare const eq: <T>(a: T) => SQLFragment<boolean | null, T>;
+export declare const eqSQLValue: <T>(a: T) => SQLFragment<boolean | null, T>;
 export declare const ne: <T>(a: T) => SQLFragment<boolean | null, T>;
 export declare const gt: <T>(a: T) => SQLFragment<boolean | null, T>;
 export declare const gte: <T>(a: T) => SQLFragment<boolean | null, T>;

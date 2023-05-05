@@ -1,7 +1,5 @@
 {
-  "include": [
-    "src/**/*"
-  ],
+  "include": ["src/**/*"],
   "compilerOptions": {
     "baseUrl": ".",
     "outDir": "dist",
@@ -13,9 +11,7 @@
     "declaration": true,
     "noUnusedLocals": true,
     "paths": {
-      "*": [
-        "src/typings/*"
-      ]
+      "*": ["src/typings/*"]
     }
-  },
+  }
 }

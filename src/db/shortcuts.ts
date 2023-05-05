@@ -520,6 +520,7 @@ export interface SelectOptionsForTable<
   having?: WhereableForTable<T> | SQLFragment<any>;
   lateral?: L;
   alias?: A;
+  valueOnly?: boolean;
   lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 }
 
@@ -650,6 +651,8 @@ export const select: SelectSignatures = function (
         ? columns
           ? sql`${raw(aggregate)}(${cols(columns)})`
           : sql`${raw(aggregate)}(${alias}.*)`
+        : options.valueOnly
+        ? sql`${columns![0]}`
         : SQLForColumnsOfTable(columns as Column[], alias as Table),
     colsExtraSQL =
       lateral instanceof SQLFragment || mode === SelectResultMode.Numeric
