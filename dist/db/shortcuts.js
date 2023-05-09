@@ -8,10 +8,11 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.nested = exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.selectExactlyOne = exports.selectOne = exports.select = exports.NotExactlyOneError = exports.SelectResultMode = exports.truncate = exports.deletes = exports.update = exports.upsert = exports.doNothing = exports.constraint = exports.Constraint = exports.insert = void 0;
 const core_1 = require("./core");
 const utils_1 = require("./utils");
+const config = (0, core_1.getConfig)();
 function SQLForColumnsOfTable(columns, table) {
     return columns === undefined
-        ? (0, core_1.sql) `to_jsonb(${table}.*)`
-        : (0, core_1.sql) `jsonb_build_object(${(0, utils_1.mapWithSeparator)(columns, (0, core_1.sql) `, `, (c) => (0, core_1.sql) `${(0, core_1.param)(c)}::text, ${c}`)})`;
+        ? config.nameTransforms.pg.allColumnsJSON(table)
+        : config.nameTransforms.pg.namedColumnsJSON(columns);
 }
 function SQLForExtras(extras) {
     return extras === undefined
@@ -184,21 +185,21 @@ exports.NotExactlyOneError = NotExactlyOneError;
  * * `column` — a single column name for nested queries
  * * `order` – an array of `OrderSpec` objects, such as
  * `{ by: 'column', direction: 'ASC' }`
- * * `limit` and `offset` – numbers: apply this limit and offset to the query
- * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
+ * * `limit` and `offset` – numbers: apply this limit and offset to the query
+ * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
  * `count` queries to be `LATERAL JOIN`ed, or a single `select`/`selectOne`/
  * `count` query whose result will be passed through directly as the result of
  * the containing query
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
- * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
  * * `extra` — a single extra name for nested queries
  * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
 const select = function (table, where = core_1.all, options = {}, mode = SelectResultMode.Many, aggregate = "count") {
-    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, column, array, extras, extra, } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
+    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, column, extras, extra, array, } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
         ? allOptions.lock
         : [allOptions.lock], order = allOptions.order === undefined || Array.isArray(allOptions.order)
         ? allOptions.order
@@ -276,9 +277,8 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
     const rowsQuery = (0, core_1.sql) `SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`, query = mode !== SelectResultMode.Many
         ? rowsQuery
         : column || array
-            ? (0, core_1.sql) `${rowsQuery}`
-            : // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-                (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
+            ? (0, core_1.sql) `${rowsQuery}` // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
+            : (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
     query.runResultTransform =
         mode === SelectResultMode.Numeric
             ? // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow

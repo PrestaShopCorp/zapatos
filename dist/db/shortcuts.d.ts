@@ -172,14 +172,14 @@ export declare class NotExactlyOneError extends Error {
  * * `column` — a single column name for nested queries
  * * `order` – an array of `OrderSpec` objects, such as
  * `{ by: 'column', direction: 'ASC' }`
- * * `limit` and `offset` – numbers: apply this limit and offset to the query
- * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
+ * * `limit` and `offset` – numbers: apply this limit and offset to the query
+ * * `lateral` — either an object mapping keys to nested `select`/`selectOne`/
  * `count` queries to be `LATERAL JOIN`ed, or a single `select`/`selectOne`/
  * `count` query whose result will be passed through directly as the result of
  * the containing query
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
- * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
  * * `extra` — a single extra name for nested queries
  * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
