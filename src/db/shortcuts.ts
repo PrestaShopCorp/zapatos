@@ -30,7 +30,6 @@ import {
   raw,
   param,
   Default,
-  getConfig,
 } from "./core";
 
 import {
@@ -38,8 +37,6 @@ import {
   mapWithSeparator,
   NoInfer,
 } from "./utils";
-
-const config = getConfig();
 
 export type JSONOnlyColsForTable<
   T extends Table,
@@ -107,10 +104,17 @@ type ReturningTypeForTable<
     ? ExtrasResult<T, E>
     : never);
 
-function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
+function SQLForColumnsOfTable(
+  columns: readonly Column[] | undefined,
+  table: Table
+) {
   return columns === undefined
-    ? config.nameTransforms.pg.allColumnsJSON(table)
-    : config.nameTransforms.pg.namedColumnsJSON(columns);
+    ? sql`to_jsonb(${table}.*)`
+    : sql`jsonb_build_object(${mapWithSeparator(
+        columns,
+        sql`, `,
+        (c) => sql`${param(c)}::text, ${c}`
+      )})`;
 }
 
 function SQLForExtras<T extends Table>(extras: ExtrasOption<T>) {
@@ -172,10 +176,7 @@ export const insert: InsertSignatures = function (
             (v) => sql`(${vals(v)})`
           )
         : sql`(${vals(completedValues)})`,
-      returningSQL = SQLForColumnsOfTable(
-        options?.returning as Column[],
-        table
-      ),
+      returningSQL = SQLForColumnsOfTable(options?.returning, table),
       extrasSQL = SQLForExtras(options?.extras);
 
     query = sql`INSERT INTO ${table} (${colsSQL}) VALUES ${valuesSQL} RETURNING ${returningSQL}${extrasSQL} AS result`;
@@ -338,7 +339,7 @@ export const upsert: UpsertSignatures = function (
         ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
         : sql`EXCLUDED.${c}`
     ),
-    returningSQL = SQLForColumnsOfTable(options?.returning as Column[], table),
+    returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
     suppressReport = options?.reportAction === "suppress";
 
@@ -394,10 +395,7 @@ export const update: UpdateSignatures = function (
   // note: the ROW() constructor below is required in Postgres 10+ if we're updating a single column
   // more info: https://www.postgresql-archive.org/Possible-regression-in-UPDATE-SET-lt-column-list-gt-lt-row-expression-gt-with-just-one-single-column0-td5989074.html
 
-  const returningSQL = SQLForColumnsOfTable(
-      options?.returning as Column[],
-      table
-    ),
+  const returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
     query = sql`UPDATE ${table} SET (${cols(values)}) = ROW(${vals(
       values
@@ -431,10 +429,7 @@ export const deletes: DeleteSignatures = function (
     ExtrasOption<Table>
   >
 ): SQLFragment {
-  const returningSQL = SQLForColumnsOfTable(
-      options?.returning as Column[],
-      table
-    ),
+  const returningSQL = SQLForColumnsOfTable(options?.returning, table),
     extrasSQL = SQLForExtras(options?.extras),
     query = sql`DELETE FROM ${table} WHERE ${where} RETURNING ${returningSQL}${extrasSQL} AS result`;
 
@@ -515,12 +510,14 @@ export interface SelectOptionsForTable<
   offset?: number;
   withTies?: boolean;
   columns?: C;
+  column?: ColumnForTable<T>;
+  array?: ColumnForTable<T>;
   extras?: E;
+  extra?: SQLFragment<any>;
   groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
   having?: WhereableForTable<T> | SQLFragment<any>;
   lateral?: L;
   alias?: A;
-  valueOnly?: boolean;
   lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 }
 
@@ -595,6 +592,7 @@ export class NotExactlyOneError extends Error {
  * or `all`
  * @param options Options object. Keys (all optional) are:
  * * `columns` — an array of column names: only these columns will be returned
+ * * `column` — a single column name for nested queries
  * * `order` – an array of `OrderSpec` objects, such as
  * `{ by: 'column', direction: 'ASC' }`
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
@@ -605,6 +603,8 @@ export class NotExactlyOneError extends Error {
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
  * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extra` — a single extra name for nested queries
+ * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
@@ -625,7 +625,17 @@ export const select: SelectSignatures = function (
       mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
     alias = allOptions.alias || table,
-    { distinct, groupBy, having, lateral, columns, extras } = allOptions,
+    {
+      distinct,
+      groupBy,
+      having,
+      lateral,
+      columns,
+      column,
+      array,
+      extras,
+      extra,
+    } = allOptions,
     lock =
       allOptions.lock === undefined || Array.isArray(allOptions.lock)
         ? allOptions.lock
@@ -645,18 +655,22 @@ export const select: SelectSignatures = function (
             : []
         }`,
     colsSQL =
-      lateral instanceof SQLFragment
+      lateral instanceof SQLFragment || extra
         ? []
         : mode === SelectResultMode.Numeric
         ? columns
           ? sql`${raw(aggregate)}(${cols(columns)})`
           : sql`${raw(aggregate)}(${alias}.*)`
-        : options.valueOnly
-        ? sql`${columns![0]}`
-        : SQLForColumnsOfTable(columns as Column[], alias as Table),
+        : array
+        ? sql`array_agg(${array})`
+        : column
+        ? sql`${column}`
+        : SQLForColumnsOfTable(columns, alias as Table),
     colsExtraSQL =
       lateral instanceof SQLFragment || mode === SelectResultMode.Numeric
         ? []
+        : extra
+        ? sql`${extra}`
         : SQLForExtras(extras),
     colsLateralSQL =
       lateral === undefined || mode === SelectResultMode.Numeric
@@ -757,6 +771,8 @@ export const select: SelectSignatures = function (
     query =
       mode !== SelectResultMode.Many
         ? rowsQuery
+        : column || array
+        ? sql<SQL, any>`${rowsQuery}`
         : // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
           sql<
             SQL,
@@ -963,4 +979,15 @@ export const max: NumericAggregateSignatures = function (
   options?
 ) {
   return select(table, where, options, SelectResultMode.Numeric, "max");
+};
+
+/**
+ * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
+ * @param frag The `SQLFragment` to be transformed
+ * @returns The value of type T
+ */
+export const nested: <T>(frag: SQLFragment<any>) => T = function <T>(
+  frag: SQLFragment<any>
+): T {
+  return sql`(${frag})` as T;
 };

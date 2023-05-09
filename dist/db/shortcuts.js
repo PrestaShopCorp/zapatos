@@ -5,14 +5,13 @@ Copyright (C) 2020 - 2022 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.selectExactlyOne = exports.selectOne = exports.select = exports.NotExactlyOneError = exports.SelectResultMode = exports.truncate = exports.deletes = exports.update = exports.upsert = exports.doNothing = exports.constraint = exports.Constraint = exports.insert = void 0;
+exports.nested = exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.selectExactlyOne = exports.selectOne = exports.select = exports.NotExactlyOneError = exports.SelectResultMode = exports.truncate = exports.deletes = exports.update = exports.upsert = exports.doNothing = exports.constraint = exports.Constraint = exports.insert = void 0;
 const core_1 = require("./core");
 const utils_1 = require("./utils");
-const config = (0, core_1.getConfig)();
 function SQLForColumnsOfTable(columns, table) {
     return columns === undefined
-        ? config.nameTransforms.pg.allColumnsJSON(table)
-        : config.nameTransforms.pg.namedColumnsJSON(columns);
+        ? (0, core_1.sql) `to_jsonb(${table}.*)`
+        : (0, core_1.sql) `jsonb_build_object(${(0, utils_1.mapWithSeparator)(columns, (0, core_1.sql) `, `, (c) => (0, core_1.sql) `${(0, core_1.param)(c)}::text, ${c}`)})`;
 }
 function SQLForExtras(extras) {
     return extras === undefined
@@ -182,6 +181,7 @@ exports.NotExactlyOneError = NotExactlyOneError;
  * or `all`
  * @param options Options object. Keys (all optional) are:
  * * `columns` — an array of column names: only these columns will be returned
+ * * `column` — a single column name for nested queries
  * * `order` – an array of `OrderSpec` objects, such as
  * `{ by: 'column', direction: 'ASC' }`
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
@@ -192,11 +192,13 @@ exports.NotExactlyOneError = NotExactlyOneError;
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
  * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extra` — a single extra name for nested queries
+ * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
 const select = function (table, where = core_1.all, options = {}, mode = SelectResultMode.Many, aggregate = "count") {
-    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, extras } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
+    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, column, array, extras, extra, } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
         ? allOptions.lock
         : [allOptions.lock], order = allOptions.order === undefined || Array.isArray(allOptions.order)
         ? allOptions.order
@@ -206,17 +208,21 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
             ? (0, core_1.sql) ` ON (${distinct})`
             : Array.isArray(distinct)
                 ? (0, core_1.sql) ` ON (${(0, core_1.cols)(distinct)})`
-                : []}`, colsSQL = lateral instanceof core_1.SQLFragment
+                : []}`, colsSQL = lateral instanceof core_1.SQLFragment || extra
         ? []
         : mode === SelectResultMode.Numeric
             ? columns
                 ? (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${(0, core_1.cols)(columns)})`
                 : (0, core_1.sql) `${(0, core_1.raw)(aggregate)}(${alias}.*)`
-            : options.valueOnly
-                ? (0, core_1.sql) `${columns[0]}`
-                : SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric
+            : array
+                ? (0, core_1.sql) `array_agg(${array})`
+                : column
+                    ? (0, core_1.sql) `${column}`
+                    : SQLForColumnsOfTable(columns, alias), colsExtraSQL = lateral instanceof core_1.SQLFragment || mode === SelectResultMode.Numeric
         ? []
-        : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric
+        : extra
+            ? (0, core_1.sql) `${extra}`
+            : SQLForExtras(extras), colsLateralSQL = lateral === undefined || mode === SelectResultMode.Numeric
         ? []
         : lateral instanceof core_1.SQLFragment
             ? (0, core_1.sql) `"lateral_passthru".result`
@@ -269,8 +275,10 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
             });
     const rowsQuery = (0, core_1.sql) `SELECT${distinctSQL} ${allColsSQL} AS result FROM ${table}${tableAliasSQL}${lateralSQL}${whereSQL}${groupBySQL}${havingSQL}${orderSQL}${limitSQL}${offsetSQL}${lockSQL}`, query = mode !== SelectResultMode.Many
         ? rowsQuery
-        : // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
-            (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
+        : column || array
+            ? (0, core_1.sql) `${rowsQuery}`
+            : // we need the aggregate to sit in a sub-SELECT in order to keep ORDER and LIMIT working as usual
+                (0, core_1.sql) `SELECT coalesce(jsonb_agg(result), '[]') AS result FROM (${rowsQuery}) AS ${(0, core_1.raw)(`"sq_${alias}"`)}`;
     query.runResultTransform =
         mode === SelectResultMode.Numeric
             ? // note: pg deliberately returns strings for int8 in case 64-bit numbers overflow
@@ -386,3 +394,12 @@ const max = function (table, where, options) {
     return (0, exports.select)(table, where, options, SelectResultMode.Numeric, "max");
 };
 exports.max = max;
+/**
+ * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
+ * @param frag The `SQLFragment` to be transformed
+ * @returns The value of type T
+ */
+const nested = function (frag) {
+    return (0, core_1.sql) `(${frag})`;
+};
+exports.nested = nested;

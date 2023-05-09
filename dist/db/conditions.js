@@ -5,7 +5,7 @@ Copyright (C) 2020 - 2022 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.subtract = exports.add = exports.now = exports.before = exports.after = exports.fromNow = exports.not = exports.and = exports.or = exports.isNotIn = exports.isIn = exports.notReImatch = exports.notReMatch = exports.reImatch = exports.reMatch = exports.notSimilarTo = exports.similarTo = exports.notIlike = exports.ilike = exports.notLike = exports.like = exports.notBetweenSymmetric = exports.notBetween = exports.betweenSymmetric = exports.between = exports.lte = exports.lt = exports.gte = exports.gt = exports.ne = exports.eqSQLValue = exports.eq = exports.isNotDistinctFrom = exports.isDistinctFrom = exports.isNotUnknown = exports.isUnknown = exports.isNotFalse = exports.isFalse = exports.isNotTrue = exports.isTrue = exports.isNotNull = exports.isNull = void 0;
+exports.subtract = exports.add = exports.now = exports.before = exports.after = exports.fromNow = exports.not = exports.and = exports.or = exports.isNotIn = exports.isIn = exports.notReImatch = exports.notReMatch = exports.reImatch = exports.reMatch = exports.notSimilarTo = exports.similarTo = exports.notIlike = exports.ilike = exports.notLike = exports.like = exports.notBetweenSymmetric = exports.notBetween = exports.betweenSymmetric = exports.between = exports.lte = exports.lt = exports.gte = exports.gt = exports.ne = exports.eq = exports.isNotDistinctFrom = exports.isDistinctFrom = exports.isNotUnknown = exports.isUnknown = exports.isNotFalse = exports.isFalse = exports.isNotTrue = exports.isTrue = exports.isNotNull = exports.isNull = void 0;
 const core_1 = require("./core");
 const utils_1 = require("./utils");
 const conditionalParam = (a) => a instanceof core_1.SQLFragment ||
@@ -27,8 +27,6 @@ const isNotDistinctFrom = (a) => (0, core_1.sql) `${core_1.self} IS NOT DISTINCT
 exports.isNotDistinctFrom = isNotDistinctFrom;
 const eq = (a) => (0, core_1.sql) `${core_1.self} = ${conditionalParam(a)}`;
 exports.eq = eq;
-const eqSQLValue = (a) => (0, core_1.sql) `${core_1.self} = (${conditionalParam(a)})`;
-exports.eqSQLValue = eqSQLValue;
 const ne = (a) => (0, core_1.sql) `${core_1.self} <> ${conditionalParam(a)}`;
 exports.ne = ne;
 const gt = (a) => (0, core_1.sql) `${core_1.self} > ${conditionalParam(a)}`;
@@ -67,13 +65,17 @@ const notReMatch = (a) => (0, core_1.sql) `${core_1.self} !~ ${conditionalParam(
 exports.notReMatch = notReMatch;
 const notReImatch = (a) => (0, core_1.sql) `${core_1.self} !~* ${conditionalParam(a)}`;
 exports.notReImatch = notReImatch;
-const isIn = (a) => a.length > 0
-    ? (0, core_1.sql) `${core_1.self} IN (${(0, core_1.vals)(a)})`
-    : (0, core_1.sql) `false`;
+const isIn = (a) => "run" in a
+    ? (0, core_1.sql) `${core_1.self} IN ${a}`
+    : a.length > 0
+        ? (0, core_1.sql) `${core_1.self} IN (${(0, core_1.vals)(a)})`
+        : (0, core_1.sql) `false`;
 exports.isIn = isIn;
-const isNotIn = (a) => a.length > 0
-    ? (0, core_1.sql) `${core_1.self} NOT IN (${(0, core_1.vals)(a)})`
-    : (0, core_1.sql) `true`;
+const isNotIn = (a) => "run" in a
+    ? (0, core_1.sql) `${core_1.self} NOT IN ${a}`
+    : a.length > 0
+        ? (0, core_1.sql) `${core_1.self} NOT IN (${(0, core_1.vals)(a)})`
+        : (0, core_1.sql) `true`;
 exports.isNotIn = isNotIn;
 const or = (...conditions) => (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conditions, (0, core_1.sql) ` OR `, (c) => c)})`;
 exports.or = or;

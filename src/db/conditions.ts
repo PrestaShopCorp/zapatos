@@ -41,8 +41,6 @@ export const isNotDistinctFrom = <T>(a: T) =>
 
 export const eq = <T>(a: T) =>
   sql<SQL, boolean | null, T>`${self} = ${conditionalParam(a)}`;
-export const eqSQLValue = <T>(a: T) =>
-  sql<SQL, boolean | null, T>`${self} = (${conditionalParam(a)})`;
 export const ne = <T>(a: T) =>
   sql<SQL, boolean | null, T>`${self} <> ${conditionalParam(a)}`;
 export const gt = <T>(a: T) =>
@@ -93,11 +91,15 @@ export const notReImatch = <T extends string>(a: T) =>
   sql<SQL, boolean | null, T>`${self} !~* ${conditionalParam(a)}`;
 
 export const isIn = <T>(a: readonly T[]) =>
-  a.length > 0
+  "run" in a
+    ? sql`${self} IN ${a}`
+    : a.length > 0
     ? sql<SQL, boolean | null, T>`${self} IN (${vals(a)})`
     : sql`false`;
 export const isNotIn = <T>(a: readonly T[]) =>
-  a.length > 0
+  "run" in a
+    ? sql`${self} NOT IN ${a}`
+    : a.length > 0
     ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})`
     : sql`true`;
 

@@ -25,6 +25,7 @@ export const insert = mod.insert;
 export const isDatabaseError = mod.isDatabaseError;
 export const max = mod.max;
 export const min = mod.min;
+export const nested = mod.nested;
 export const nullTransforms = mod.nullTransforms;
 export const param = mod.param;
 export const parent = mod.parent;

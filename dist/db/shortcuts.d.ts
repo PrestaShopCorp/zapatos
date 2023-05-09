@@ -131,12 +131,14 @@ export interface SelectOptionsForTable<T extends Table, C extends ColumnsOption<
     offset?: number;
     withTies?: boolean;
     columns?: C;
+    column?: ColumnForTable<T>;
+    array?: ColumnForTable<T>;
     extras?: E;
+    extra?: SQLFragment<any>;
     groupBy?: ColumnForTable<T> | ColumnForTable<T>[] | SQLFragment<any>;
     having?: WhereableForTable<T> | SQLFragment<any>;
     lateral?: L;
     alias?: A;
-    valueOnly?: boolean;
     lock?: SelectLockingOptions<NoInfer<A>> | SelectLockingOptions<NoInfer<A>>[];
 }
 type SelectReturnTypeForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>> = undefined extends L ? ReturningTypeForTable<T, C, E> : L extends SQLFragmentMap ? ReturningTypeForTable<T, C, E> & LateralResult<L> : L extends SQLFragment<any> ? RunResultForSQLFragment<L> : never;
@@ -167,6 +169,7 @@ export declare class NotExactlyOneError extends Error {
  * or `all`
  * @param options Options object. Keys (all optional) are:
  * * `columns` — an array of column names: only these columns will be returned
+ * * `column` — a single column name for nested queries
  * * `order` – an array of `OrderSpec` objects, such as
  * `{ by: 'column', direction: 'ASC' }`
  * * `limit` and `offset` – numbers: apply this limit and offset to the query
@@ -177,6 +180,8 @@ export declare class NotExactlyOneError extends Error {
  * * `alias` — table alias (string): required if using `lateral` to join a table
  * to itself
  * * `extras` — an object mapping key(s) to `SQLFragment`s, so that derived
+ * * `extra` — a single extra name for nested queries
+ * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
  * @param mode (Used internally by `selectOne` and `count`)
  */
@@ -259,4 +264,10 @@ export declare const min: NumericAggregateSignatures;
  * @param options Options object. Useful keys may be: `columns`, `alias`.
  */
 export declare const max: NumericAggregateSignatures;
+/**
+ * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
+ * @param frag The `SQLFragment` to be transformed
+ * @returns The value of type T
+ */
+export declare const nested: <T>(frag: SQLFragment<any>) => T;
 export {};
