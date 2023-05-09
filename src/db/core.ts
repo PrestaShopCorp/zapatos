@@ -617,6 +617,12 @@ export class SQLFragment<
         }
       }
     } else if (typeof expression === "object") {
+      if (expression === globalThis) {
+        throw new Error(
+          "Did you use `self` (the global object) where you meant `db.self` (the Zapatos value)? The global object cannot be embedded in a query."
+        );
+      }
+
       // must be a Whereable object, so put together a WHERE clause
       const columnNames = <Column[]>Object.keys(expression).sort();
 
