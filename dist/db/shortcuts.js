@@ -162,6 +162,12 @@ var SelectResultMode;
     SelectResultMode[SelectResultMode["One"] = 1] = "One";
     SelectResultMode[SelectResultMode["ExactlyOne"] = 2] = "ExactlyOne";
     SelectResultMode[SelectResultMode["Numeric"] = 3] = "Numeric";
+    SelectResultMode[SelectResultMode["Boolean"] = 4] = "Boolean";
+    SelectResultMode[SelectResultMode["Number"] = 5] = "Number";
+    SelectResultMode[SelectResultMode["String"] = 6] = "String";
+    SelectResultMode[SelectResultMode["BooleanArray"] = 7] = "BooleanArray";
+    SelectResultMode[SelectResultMode["NumberArray"] = 8] = "NumberArray";
+    SelectResultMode[SelectResultMode["StringArray"] = 9] = "StringArray";
 })(SelectResultMode = exports.SelectResultMode || (exports.SelectResultMode = {}));
 class NotExactlyOneError extends Error {
     constructor(query, ...params) {
@@ -196,10 +202,14 @@ exports.NotExactlyOneError = NotExactlyOneError;
  * * `extra` — a single extra name for nested queries
  * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
- * @param mode (Used internally by `selectOne` and `count`)
+ * @param mode (Used internally by `selectOne`, `count` and sub-queries)
  */
 const select = function (table, where = core_1.all, options = {}, mode = SelectResultMode.Many, aggregate = "count") {
-    const limit1 = mode === SelectResultMode.One || mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, column, extras, extra, array, } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
+    const limit1 = mode === SelectResultMode.Boolean ||
+        mode === SelectResultMode.Number ||
+        mode === SelectResultMode.String ||
+        mode === SelectResultMode.One ||
+        mode === SelectResultMode.ExactlyOne, allOptions = limit1 ? { ...options, limit: 1 } : options, alias = allOptions.alias || table, { distinct, groupBy, having, lateral, columns, column, extras, extra, array, } = allOptions, lock = allOptions.lock === undefined || Array.isArray(allOptions.lock)
         ? allOptions.lock
         : [allOptions.lock], order = allOptions.order === undefined || Array.isArray(allOptions.order)
         ? allOptions.order
@@ -293,7 +303,7 @@ const select = function (table, where = core_1.all, options = {}, mode = SelectR
                     }
                     return result;
                 }
-                : // SelectResultMode.One or SelectResultMode.Many
+                : // SelectResultMode.One or SelectResultMode.Many or types of subqueries results
                     (qr) => { var _a; return (_a = qr.rows[0]) === null || _a === void 0 ? void 0 : _a.result; };
     return query;
 };
@@ -306,15 +316,16 @@ exports.select = select;
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
  * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.One
  */
-const selectOne = function (table, where, options = {}) {
+const selectOne = function (table, where, options = {}, mode) {
     // you might argue that 'selectOne' offers little that you can't get with
     // destructuring assignment and plain 'select'
     // -- e.g.let[x] = async select(...).run(pool); -- but something worth having
     // is '| undefined' in the return signature, because the result of indexing
     // never includes undefined (until 4.1 and --noUncheckedIndexedAccess)
     // (see https://github.com/Microsoft/TypeScript/issues/13778)
-    return (0, exports.select)(table, where, options, SelectResultMode.One);
+    return (0, exports.select)(table, where, options, mode !== null && mode !== void 0 ? mode : SelectResultMode.One);
 };
 exports.selectOne = selectOne;
 /**
@@ -326,9 +337,10 @@ exports.selectOne = selectOne;
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
  * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.ExactlyOne
  */
-const selectExactlyOne = function (table, where, options = {}) {
-    return (0, exports.select)(table, where, options, SelectResultMode.ExactlyOne);
+const selectExactlyOne = function (table, where, options = {}, mode) {
+    return (0, exports.select)(table, where, options, mode !== null && mode !== void 0 ? mode : SelectResultMode.ExactlyOne);
 };
 exports.selectExactlyOne = selectExactlyOne;
 /**
@@ -397,7 +409,7 @@ exports.max = max;
 /**
  * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
  * @param frag The `SQLFragment` to be transformed
- * @returns The value of type T
+ * @returns The value of type T result
  */
 const nested = function (frag) {
     return (0, core_1.sql) `(${frag})`;

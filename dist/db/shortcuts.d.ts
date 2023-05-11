@@ -146,13 +146,25 @@ export declare enum SelectResultMode {
     Many = 0,
     One = 1,
     ExactlyOne = 2,
-    Numeric = 3
+    Numeric = 3,
+    Boolean = 4,
+    Number = 5,
+    String = 6,
+    BooleanArray = 7,
+    NumberArray = 8,
+    StringArray = 9
 }
 export type FullSelectReturnTypeForTable<T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, M extends SelectResultMode> = {
     [SelectResultMode.Many]: SelectReturnTypeForTable<T, C, L, E>[];
     [SelectResultMode.ExactlyOne]: SelectReturnTypeForTable<T, C, L, E>;
     [SelectResultMode.One]: SelectReturnTypeForTable<T, C, L, E> | undefined;
     [SelectResultMode.Numeric]: number;
+    [SelectResultMode.Boolean]: boolean;
+    [SelectResultMode.Number]: number;
+    [SelectResultMode.String]: string;
+    [SelectResultMode.BooleanArray]: boolean[];
+    [SelectResultMode.NumberArray]: number[];
+    [SelectResultMode.StringArray]: string[];
 }[M];
 export interface SelectSignatures {
     <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string = never, M extends SelectResultMode = SelectResultMode.Many>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>, mode?: M, aggregate?: string): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
@@ -183,11 +195,12 @@ export declare class NotExactlyOneError extends Error {
  * * `extra` — a single extra name for nested queries
  * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
- * @param mode (Used internally by `selectOne` and `count`)
+ * @param mode (Used internally by `selectOne`, `count` and sub-queries)
  */
 export declare const select: SelectSignatures;
 export interface SelectOneSignatures {
-    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.One>>;
+    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string, M extends SelectResultMode = SelectResultMode.One>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>, mode?: null): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
+    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string, M extends SelectResultMode>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>, mode?: M): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 /**
  * Generate a `SELECT` query `SQLFragment` that returns only a single result (or
@@ -197,10 +210,12 @@ export interface SelectOneSignatures {
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
  * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.One
  */
 export declare const selectOne: SelectOneSignatures;
 export interface SelectExactlyOneSignatures {
-    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, SelectResultMode.ExactlyOne>>;
+    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string, M extends SelectResultMode = SelectResultMode.ExactlyOne>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>, mode?: null): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
+    <T extends Table, C extends ColumnsOption<T>, L extends LateralOption<C, E>, E extends ExtrasOption<T>, A extends string, M extends SelectResultMode>(table: T, where: WhereableForTable<T> | SQLFragment<any> | AllType, options?: SelectOptionsForTable<T, C, L, E, A>, mode?: M): SQLFragment<FullSelectReturnTypeForTable<T, C, L, E, M>>;
 }
 /**
  * Generate a `SELECT` query `SQLFragment` that returns a single result or
@@ -211,6 +226,7 @@ export interface SelectExactlyOneSignatures {
  * @param where A `Whereable` or `SQLFragment` defining the rows to be selected,
  * or `all`
  * @param options Options object. See documentation for `select` for details.
+ * @param mode Type of the value returned by a subquery, default to SelectResultMode.ExactlyOne
  */
 export declare const selectExactlyOne: SelectExactlyOneSignatures;
 export interface NumericAggregateSignatures {
@@ -267,7 +283,7 @@ export declare const max: NumericAggregateSignatures;
 /**
  * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
  * @param frag The `SQLFragment` to be transformed
- * @returns The value of type T
+ * @returns The value of type T result
  */
-export declare const nested: <T>(frag: SQLFragment<any>) => T;
+export declare const nested: <T extends SQLFragment<any>>(frag: T) => RunResultForSQLFragment<T>;
 export {};
