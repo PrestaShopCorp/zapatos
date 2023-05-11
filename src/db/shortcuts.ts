@@ -623,7 +623,7 @@ export class NotExactlyOneError extends Error {
  * * `extra` — a single extra name for nested queries
  * * `array` — a single column name to be concatenated with array_agg in nested queries
  * quantities can be included in the JSON result
- * @param mode (Used internally by `selectOne` and `count`)
+ * @param mode (Used internally by `selectOne`, `count` and sub-queries)
  */
 export const select: SelectSignatures = function (
   table: Table,
@@ -640,9 +640,9 @@ export const select: SelectSignatures = function (
 ) {
   const limit1 =
       mode === SelectResultMode.Boolean ||
-      SelectResultMode.Number ||
-      SelectResultMode.String ||
-      SelectResultMode.One ||
+      mode === SelectResultMode.Number ||
+      mode === SelectResultMode.String ||
+      mode === SelectResultMode.One ||
       mode === SelectResultMode.ExactlyOne,
     allOptions = limit1 ? { ...options, limit: 1 } : options,
     alias = allOptions.alias || table,
