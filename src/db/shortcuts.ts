@@ -1034,10 +1034,12 @@ export const max: NumericAggregateSignatures = function (
 /**
  * Transforms an `SQLFragment` into a sub-query to obtain a value instead of an object
  * @param frag The `SQLFragment` to be transformed
- * @returns The value of type T
+ * @returns The value of type T result
  */
-export const nested: <T extends SQLFragment<any>>(frag: T) => T = function <
-  T extends SQLFragment<any>
->(frag: T): T {
-  return sql`(${frag})` as T;
+export const nested: <T extends SQLFragment<any>>(
+  frag: T
+) => RunResultForSQLFragment<T> = function <T extends SQLFragment<any>>(
+  frag: T
+): RunResultForSQLFragment<T> {
+  return sql`(${frag})` as RunResultForSQLFragment<T>;
 };
