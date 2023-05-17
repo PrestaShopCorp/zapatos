@@ -78,7 +78,7 @@ exports.doNothing = [];
  * `noNullUpdateColumns` and `updateValues` (see documentation).
  */
 const upsert = function (table, values, conflictTarget, options) {
-    var _a, _b, _c;
+    var _a, _b, _c, _d;
     if (Array.isArray(values) && values.length === 0) {
         return (0, exports.insert)(table, values);
     } // punt a no-op to plain insert
@@ -88,16 +88,20 @@ const upsert = function (table, values, conflictTarget, options) {
     if (!Array.isArray(noNullUpdateColumns)) {
         noNullUpdateColumns = [noNullUpdateColumns];
     }
+    let noUpdateOnDataExistColumns = (_b = options === null || options === void 0 ? void 0 : options.noUpdateOnDataExistColumns) !== null && _b !== void 0 ? _b : [];
+    if (!Array.isArray(noUpdateOnDataExistColumns)) {
+        noUpdateOnDataExistColumns = [noUpdateOnDataExistColumns];
+    }
     let specifiedUpdateColumns = options === null || options === void 0 ? void 0 : options.updateColumns;
     if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns)) {
         specifiedUpdateColumns = [specifiedUpdateColumns];
     }
     const completedValues = Array.isArray(values)
         ? (0, utils_1.completeKeysWithDefaultValue)(values, core_1.Default)
-        : [values], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_b = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _b !== void 0 ? _b : {}, updateColumns = [
+        : [values], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_c = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _c !== void 0 ? _c : {}, updateColumns = [
         ...new Set([
             // deduplicate the keys here
-            ...((_c = specifiedUpdateColumns) !== null && _c !== void 0 ? _c : colNames),
+            ...((_d = specifiedUpdateColumns) !== null && _d !== void 0 ? _d : colNames),
             ...Object.keys(updateValues),
         ]),
     ], conflictTargetSQL = Array.isArray(conflictTarget)
@@ -106,7 +110,9 @@ const upsert = function (table, values, conflictTarget, options) {
         ? updateValues[c]
         : noNullUpdateColumns.includes(c)
             ? (0, core_1.sql) `CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
-            : (0, core_1.sql) `EXCLUDED.${c}`), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), suppressReport = (options === null || options === void 0 ? void 0 : options.reportAction) === "suppress";
+            : noUpdateOnDataExistColumns.includes(c)
+                ? (0, core_1.sql) `CASE WHEN ${table}.${c} IS NULL THEN EXCLUDED.${c} ELSE${table}.${c} END`
+                : (0, core_1.sql) `EXCLUDED.${c}`), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), suppressReport = (options === null || options === void 0 ? void 0 : options.reportAction) === "suppress";
     // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
     // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
     const insertPart = (0, core_1.sql) `INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`, conflictPart = (0, core_1.sql) `ON CONFLICT ${conflictTargetSQL} DO`, conflictActionPart = updateColsSQL.length > 0

@@ -59,6 +59,7 @@ interface UpsertOptions<T extends Table, C extends ColumnsOption<T>, E extends E
     updateValues?: UpdatableForTable<T>;
     updateColumns?: UC;
     noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+    noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
     reportAction?: RA;
 }
 interface UpsertSignatures {
