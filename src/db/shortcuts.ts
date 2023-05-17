@@ -233,6 +233,7 @@ interface UpsertOptions<
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   reportAction?: RA;
 }
 
@@ -303,6 +304,11 @@ export const upsert: UpsertSignatures = function (
     noNullUpdateColumns = [noNullUpdateColumns];
   }
 
+  let noUpdateOnDataExistColumns = options?.noUpdateOnDataExistColumns ?? [];
+  if (!Array.isArray(noUpdateOnDataExistColumns)) {
+    noUpdateOnDataExistColumns = [noUpdateOnDataExistColumns];
+  }
+
   let specifiedUpdateColumns = options?.updateColumns;
   if (specifiedUpdateColumns && !Array.isArray(specifiedUpdateColumns)) {
     specifiedUpdateColumns = [specifiedUpdateColumns];
@@ -336,6 +342,8 @@ export const upsert: UpsertSignatures = function (
         ? updateValues[c]
         : noNullUpdateColumns.includes(c)
         ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
+        : noUpdateOnDataExistColumns.includes(c)
+        ? sql`CASE WHEN ${table}.${c} IS NULL THEN EXCLUDED.${c} ELSE${table}.${c} END`
         : sql`EXCLUDED.${c}`
     ),
     returningSQL = SQLForColumnsOfTable(options?.returning as Column[], table),
