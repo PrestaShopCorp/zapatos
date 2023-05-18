@@ -280,7 +280,7 @@ export const doNothing = [];
  * get an `UPDATE` (when there's a matching existing value) or an `INSERT`
  * (when there isn't)
  * @param options Optionally, an object with any of the keys `updateColumns`,
- * `noNullUpdateColumns` and `updateValues` (see documentation).
+ * `noNullUpdateColumns`, `noUpdateOnDataExistColumns` and `updateValues` (see documentation).
  */
 export const upsert: UpsertSignatures = function (
   table: Table,
