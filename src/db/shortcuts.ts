@@ -233,6 +233,7 @@ interface UpsertOptions<
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   reportAction?: RA;
 }
 
@@ -279,7 +280,7 @@ export const doNothing = [];
  * get an `UPDATE` (when there's a matching existing value) or an `INSERT`
  * (when there isn't)
  * @param options Optionally, an object with any of the keys `updateColumns`,
- * `noNullUpdateColumns` and `updateValues` (see documentation).
+ * `noNullUpdateColumns`, `noUpdateOnDataExistColumns` and `updateValues` (see documentation).
  */
 export const upsert: UpsertSignatures = function (
   table: Table,
@@ -301,6 +302,11 @@ export const upsert: UpsertSignatures = function (
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
   if (!Array.isArray(noNullUpdateColumns)) {
     noNullUpdateColumns = [noNullUpdateColumns];
+  }
+
+  let noUpdateOnDataExistColumns = options?.noUpdateOnDataExistColumns ?? [];
+  if (!Array.isArray(noUpdateOnDataExistColumns)) {
+    noUpdateOnDataExistColumns = [noUpdateOnDataExistColumns];
   }
 
   let specifiedUpdateColumns = options?.updateColumns;
@@ -336,6 +342,8 @@ export const upsert: UpsertSignatures = function (
         ? updateValues[c]
         : noNullUpdateColumns.includes(c)
         ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
+        : noUpdateOnDataExistColumns.includes(c)
+        ? sql`CASE WHEN ${table}.${c} IS NULL THEN EXCLUDED.${c} ELSE${table}.${c} END`
         : sql`EXCLUDED.${c}`
     ),
     returningSQL = SQLForColumnsOfTable(options?.returning as Column[], table),
