@@ -110,6 +110,8 @@ type ReturningTypeForTable<
 function SQLForColumnsOfTable(columns: Column[] | undefined, table: Table) {
   return columns === undefined
     ? config.nameTransforms.pg.allColumnsJSON(table)
+    : columns === null
+    ? sql`NULL`
     : config.nameTransforms.pg.namedColumnsJSON(columns);
 }
 
