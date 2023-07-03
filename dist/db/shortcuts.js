@@ -12,7 +12,9 @@ const config = (0, core_1.getConfig)();
 function SQLForColumnsOfTable(columns, table) {
     return columns === undefined
         ? config.nameTransforms.pg.allColumnsJSON(table)
-        : config.nameTransforms.pg.namedColumnsJSON(columns);
+        : columns === null
+            ? (0, core_1.sql) `NULL`
+            : config.nameTransforms.pg.namedColumnsJSON(columns);
 }
 function SQLForExtras(extras) {
     return extras === undefined
