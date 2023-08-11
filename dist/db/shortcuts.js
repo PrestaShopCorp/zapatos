@@ -100,7 +100,7 @@ const upsert = function (table, values, conflictTarget, options) {
     }
     const completedValues = Array.isArray(values)
         ? (0, utils_1.completeKeysWithDefaultValue)(values, core_1.Default)
-        : [values], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_c = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _c !== void 0 ? _c : {}, updateColumns = [
+        : [values], firstRow = completedValues[0], insertColsSQL = (0, core_1.cols)(firstRow), insertValuesSQL = (0, utils_1.mapWithSeparator)(completedValues, (0, core_1.sql) `, `, (v) => (0, core_1.sql) `(${(0, core_1.vals)(v)})`), colNames = Object.keys(firstRow), updateValues = (_c = options === null || options === void 0 ? void 0 : options.updateValues) !== null && _c !== void 0 ? _c : {}, updateWhere = options === null || options === void 0 ? void 0 : options.updateWhere, updateColumns = [
         ...new Set([
             // deduplicate the keys here
             ...((_d = specifiedUpdateColumns) !== null && _d !== void 0 ? _d : colNames),
@@ -118,7 +118,9 @@ const upsert = function (table, values, conflictTarget, options) {
     // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
     // (and on the use of xmax for this purpose, see: https://stackoverflow.com/questions/39058213/postgresql-upsert-differentiate-inserted-and-updated-rows-using-system-columns-x)
     const insertPart = (0, core_1.sql) `INSERT INTO ${table} (${insertColsSQL}) VALUES ${insertValuesSQL}`, conflictPart = (0, core_1.sql) `ON CONFLICT ${conflictTargetSQL} DO`, conflictActionPart = updateColsSQL.length > 0
-        ? (0, core_1.sql) `UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})`
+        ? updateWhere
+            ? (0, core_1.sql) `UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) WHERE ${updateWhere}`
+            : (0, core_1.sql) `UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})`
         : (0, core_1.sql) `NOTHING`, reportPart = (0, core_1.sql) ` || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END)`, returningPart = (0, core_1.sql) `RETURNING ${returningSQL}${extrasSQL}${suppressReport ? [] : reportPart} AS result`, query = (0, core_1.sql) `${insertPart} ${conflictPart} ${conflictActionPart} ${returningPart}`;
     query.runResultTransform = Array.isArray(values)
         ? (qr) => qr.rows.map((r) => r.result)

@@ -234,6 +234,7 @@ interface UpsertOptions<
 > extends ReturningOptionsForTable<T, C, E> {
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
+  updateWhere: WhereableForTable<T> | SQLFragment<any>;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   reportAction?: RA;
@@ -328,6 +329,7 @@ export const upsert: UpsertSignatures = function (
     ),
     colNames = Object.keys(firstRow) as Column[],
     updateValues = options?.updateValues ?? {},
+    updateWhere = options?.updateWhere,
     updateColumns = [
       ...new Set([
         // deduplicate the keys here
@@ -359,7 +361,9 @@ export const upsert: UpsertSignatures = function (
     conflictPart = sql`ON CONFLICT ${conflictTargetSQL} DO`,
     conflictActionPart =
       updateColsSQL.length > 0
-        ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})`
+        ? updateWhere
+          ? sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL}) WHERE ${updateWhere}`
+          : sql`UPDATE SET (${updateColsSQL}) = ROW(${updateValuesSQL})`
         : sql`NOTHING`,
     reportPart = sql` || jsonb_build_object('$action', CASE xmax WHEN 0 THEN 'INSERT' ELSE 'UPDATE' END)`,
     returningPart = sql`RETURNING ${returningSQL}${extrasSQL}${
