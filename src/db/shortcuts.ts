@@ -234,7 +234,7 @@ interface UpsertOptions<
 > extends ReturningOptionsForTable<T, C, E> {
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
-  updateWhere: WhereableForTable<T> | SQLFragment<any>;
+  updateWhere?: WhereableForTable<T> | SQLFragment<any>;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   reportAction?: RA;

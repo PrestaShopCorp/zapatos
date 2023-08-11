@@ -58,7 +58,7 @@ type UpdateColumns<T extends Table> = ColumnForTable<T> | ColumnForTable<T>[];
 interface UpsertOptions<T extends Table, C extends ColumnsOption<T>, E extends ExtrasOption<T>, UC extends UpdateColumns<T> | undefined, RA extends UpsertReportAction | undefined> extends ReturningOptionsForTable<T, C, E> {
     updateValues?: UpdatableForTable<T>;
     updateColumns?: UC;
-    updateWhere: WhereableForTable<T> | SQLFragment<any>;
+    updateWhere?: WhereableForTable<T> | SQLFragment<any>;
     noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
     noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
     reportAction?: RA;
