@@ -123,7 +123,7 @@ export declare function strict<FnIn, FnOut>(fn: (x: FnIn) => FnOut): <T extends 
  *
  * @param ba The `ByteArrayString` hex representation (or `null`)
  */
-export declare const toBuffer: <T extends `\\x${string}` | null>(d: T) => T extends `\\x${string}` ? Exclude<T, `\\x${string}`> | Buffer : T;
+export declare const toBuffer: <T extends `\\x${string}` | null>(d: T) => T extends `\\x${string}` ? Buffer | Exclude<T, `\\x${string}`> : T;
 /**
  * Compiles to a numbered query parameter (`$1`, `$2`, etc) and adds the wrapped value
  * at the appropriate position of the values array passed to `pg`.
