@@ -43,7 +43,7 @@ const config = getConfig();
 
 export type JSONOnlyColsForTable<
   T extends Table,
-  C extends any[] /* `ColumnForTable<T>[]` gives errors here for reasons I haven't got to the bottom of */
+  C extends ColumnForTable<T>[]
 > = Pick<JSONSelectableForTable<T>, C[number]>;
 
 export interface SQLFragmentMap {

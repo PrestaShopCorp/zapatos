@@ -1,7 +1,7 @@
 import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from "zapatos/schema";
 import { AllType, all, SQLFragment } from "./core";
 import { NoInfer } from "./utils";
-export type JSONOnlyColsForTable<T extends Table, C extends any[]> = Pick<JSONSelectableForTable<T>, C[number]>;
+export type JSONOnlyColsForTable<T extends Table, C extends ColumnForTable<T>[]> = Pick<JSONSelectableForTable<T>, C[number]>;
 export interface SQLFragmentMap {
     [k: string]: SQLFragment<any>;
 }
