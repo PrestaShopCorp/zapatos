@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -73,7 +73,8 @@ const columnsForRelation = async (rel: Relation, schemaName: string, transforms:
         LEFT JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = c.oid AND d.objsubid = a.attnum
-        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`
+        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2
+        ORDER BY "column"`
         : `
         SELECT
           column_name AS "column"
@@ -88,8 +89,9 @@ const columnsForRelation = async (rel: Relation, schemaName: string, transforms:
         LEFT JOIN pg_catalog.pg_namespace ns ON ns.nspname = c.table_schema
         LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
-        WHERE c.table_name = $1 AND c.table_schema = $2`,
+        WHERE c.table_name = $1 AND c.table_schema = $2
 
+ORDER BY "column"`,
     values: [transforms.fromTsToPg(rel.name), transforms.fromTsToPg(schemaName)],
   });
 
@@ -126,11 +128,11 @@ export const definitionForRelationInSchema = async (
       transformedName = config.nameTransforms.fromPgToTs(udtName);
 
     let
-      selectableType = tsTypeForPgType(udtName, transformedName, enums, 'Selectable'),
-      JSONSelectableType = tsTypeForPgType(udtName, transformedName, enums, 'JSONSelectable'),
-      whereableType = tsTypeForPgType(udtName, transformedName, enums, 'Whereable'),
-      insertableType = tsTypeForPgType(udtName, transformedName, enums, 'Insertable'),
-      updatableType = tsTypeForPgType(udtName, transformedName, enums, 'Updatable');
+      selectableType = tsTypeForPgType(udtName, transformedName, enums, 'Selectable', config),
+      JSONSelectableType = tsTypeForPgType(udtName, transformedName, enums, 'JSONSelectable', config),
+      whereableType = tsTypeForPgType(udtName, transformedName, enums, 'Whereable', config),
+      insertableType = tsTypeForPgType(udtName, transformedName, enums, 'Insertable', config),
+      updatableType = tsTypeForPgType(udtName, transformedName, enums, 'Updatable', config);
 
     const
       columnDoc = createColumnDoc(config, schemaName, rel, row),

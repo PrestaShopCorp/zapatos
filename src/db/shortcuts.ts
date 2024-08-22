@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -53,7 +53,9 @@ export interface SQLFragmentOrColumnMap<T extends Table> {
   [k: string]: SQLFragment<any> | ColumnForTable<T>;
 }
 export type RunResultForSQLFragment<T extends SQLFragment<any, any>> =
-  T extends SQLFragment<infer RunResult, any> ? RunResult : never;
+  T extends SQLFragment<infer RunResult, any> ?
+  (undefined extends RunResult ? NonNullable<RunResult> | null : RunResult) :
+  never;
 
 export type LateralResult<L extends SQLFragmentMap> = {
   [K in keyof L]: RunResultForSQLFragment<L[K]>;
@@ -235,7 +237,7 @@ interface UpsertOptions<
   updateValues?: UpdatableForTable<T>;
   updateColumns?: UC;
   updateWhere?: WhereableForTable<T> | SQLFragment<any>;
-  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
   noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
   reportAction?: RA;
 }
@@ -303,7 +305,7 @@ export const upsert: UpsertSignatures = function (
   if (typeof conflictTarget === "string") conflictTarget = [conflictTarget]; // now either Column[] or Constraint
 
   let noNullUpdateColumns = options?.noNullUpdateColumns ?? [];
-  if (!Array.isArray(noNullUpdateColumns)) {
+  if (noNullUpdateColumns !== all && !Array.isArray(noNullUpdateColumns)) {
     noNullUpdateColumns = [noNullUpdateColumns];
   }
 
@@ -344,9 +346,9 @@ export const upsert: UpsertSignatures = function (
     updateValuesSQL = mapWithSeparator(updateColumns, sql`, `, (c) =>
       updateValues[c] !== undefined
         ? updateValues[c]
-        : noNullUpdateColumns.includes(c)
+        : (noNullUpdateColumns === all || noNullUpdateColumns.includes(c))
         ? sql`CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
-        : noUpdateOnDataExistColumns.includes(c)
+        : (noUpdateOnDataExistColumns === all || noUpdateOnDataExistColumns.includes(c))
         ? sql`CASE WHEN ${table}.${c} IS NULL THEN EXCLUDED.${c} ELSE${table}.${c} END`
         : sql`EXCLUDED.${c}`
     ),

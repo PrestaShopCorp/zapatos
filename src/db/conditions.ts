@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -103,13 +103,13 @@ export const isNotIn = <T>(a: readonly T[]) =>
     ? sql<SQL, boolean | null, T>`${self} NOT IN (${vals(a)})`
     : sql`true`;
 
-export const or = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) =>
+export const or = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) =>
   sql<SQL, boolean | null, T>`(${mapWithSeparator(
     conditions,
     sql` OR `,
     (c) => c
   )})`;
-export const and = <T>(...conditions: SQLFragment<any, T>[] | Whereable[]) =>
+export const and = <T>(...conditions: (SQLFragment<any, T> | Whereable)[]) =>
   sql<SQL, boolean | null, T>`(${mapWithSeparator(
     conditions,
     sql` AND `,

@@ -1,6 +1,6 @@
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 
@@ -28,10 +28,11 @@ interface ColumnOptions {
 }
 
 export interface RequiredConfig {
-  db: pg.ClientConfig;
+  // nothing is required any more
 }
 
 export interface OptionalConfig {
+  db: pg.ClientConfig;
   outDir: string;
   outExt: string;
   schemas: SchemaRules;
@@ -42,13 +43,30 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
+  customJSONParsingForLargeNumbers: boolean;
+}
+
+interface SchemaRules {
+  [schema: string]: {
+    include: '*' | string[];
+    exclude: '*' | string[];
+  };
+}
+
+interface ColumnOptions {
+  [k: string]: {  // table name or "*"
+    [k: string]: {  // column name
+      insert?: 'auto' | 'excluded' | 'optional';
+      update?: 'auto' | 'excluded';
+    };
+  };
   nameTransforms: TsNameTransforms | boolean;
 }
 
 export type Config = RequiredConfig & Partial<OptionalConfig>;
 export type CompleteConfig = RequiredConfig & OptionalConfig & { nameTransforms: TsNameTransforms };
 
-const defaultConfig: OptionalConfig = {
+const defaultConfig: Config = {
   outDir: '.',
   outExt: '.d.ts',
   schemas: { public: { include: '*', exclude: [] } },
@@ -59,6 +77,7 @@ const defaultConfig: OptionalConfig = {
   columnOptions: {},
   schemaJSDoc: true,
   unprefixedSchema: 'public',
+  customJSONParsingForLargeNumbers: false,
   nameTransforms: false,
 };
 
@@ -80,4 +99,9 @@ export const moduleRoot = () => {
   return fs.existsSync(path.join(parentDir, 'package.json')) ?
     parentDir :
     path.join(parentDir, '..');
+};
+
+export const finaliseConfig = (config: Config) => {
+  const finalConfig = { ...defaultConfig, ...config };
+  return finalConfig as CompleteConfig;
 };
