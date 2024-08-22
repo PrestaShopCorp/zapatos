@@ -1,11 +1,11 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.moduleRoot = exports.finaliseConfig = void 0;
+exports.finaliseConfig = exports.moduleRoot = void 0;
 const fs = require("fs");
 const path = require("path");
 const core_1 = require("../db/core");
@@ -20,19 +20,9 @@ const defaultConfig = {
     columnOptions: {},
     schemaJSDoc: true,
     unprefixedSchema: 'public',
+    customJSONParsingForLargeNumbers: false,
     nameTransforms: false,
 };
-const finaliseConfig = (config) => {
-    const finalConfig = { ...defaultConfig, ...config };
-    finalConfig.nameTransforms =
-        finalConfig.nameTransforms === false ? core_1.nullTransforms.ts :
-            finalConfig.nameTransforms === true ? core_1.snakeCamelTransforms.ts :
-                finalConfig.nameTransforms;
-    if (!finalConfig.db || Object.keys(finalConfig.db).length < 1)
-        throw new Error(`Zapatos needs database connection details`);
-    return finalConfig;
-};
-exports.finaliseConfig = finaliseConfig;
 const moduleRoot = () => {
     // __dirname could be either ./generate (ts) or ./dist/generate (js)
     const parentDir = path.join(__dirname, '..');
@@ -41,3 +31,9 @@ const moduleRoot = () => {
         path.join(parentDir, '..');
 };
 exports.moduleRoot = moduleRoot;
+const finaliseConfig = (config) => {
+    const mergedConfig = { ...defaultConfig, ...config };
+    const nameTransforms = mergedConfig.nameTransforms === 'snakeCamel' ? core_1.snakeCamelTransforms.ts : core_1.nullTransforms.ts;
+    return { ...mergedConfig, nameTransforms };
+};
+exports.finaliseConfig = finaliseConfig;

@@ -14,10 +14,8 @@ interface ColumnOptions {
         };
     };
 }
-export interface RequiredConfig {
-    db: pg.ClientConfig;
-}
 export interface OptionalConfig {
+    db: pg.ClientConfig;
     outDir: string;
     outExt: string;
     schemas: SchemaRules;
@@ -28,12 +26,13 @@ export interface OptionalConfig {
     columnOptions: ColumnOptions;
     schemaJSDoc: boolean;
     unprefixedSchema: string | null;
-    nameTransforms: TsNameTransforms | boolean;
+    nameTransforms: false | 'snakeCamel' | TsNameTransforms;
+    customJSONParsingForLargeNumbers: boolean;
 }
-export type Config = RequiredConfig & Partial<OptionalConfig>;
-export type CompleteConfig = RequiredConfig & OptionalConfig & {
+export type Config = Partial<OptionalConfig>;
+export type CompleteConfig = Omit<OptionalConfig, 'nameTransforms'> & {
     nameTransforms: TsNameTransforms;
 };
-export declare const finaliseConfig: (config: Config) => CompleteConfig;
 export declare const moduleRoot: () => string;
+export declare const finaliseConfig: (config: Config) => CompleteConfig;
 export {};

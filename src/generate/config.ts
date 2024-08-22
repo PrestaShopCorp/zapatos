@@ -8,8 +8,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import type * as pg from 'pg';
 
-import { TsNameTransforms, nullTransforms, snakeCamelTransforms } from '../db/core';
-
+import {TsNameTransforms, nullTransforms, snakeCamelTransforms} from '../db/core';
 
 interface SchemaRules {
   [schema: string]: {
@@ -25,10 +24,6 @@ interface ColumnOptions {
       update?: 'auto' | 'excluded';
     };
   };
-}
-
-export interface RequiredConfig {
-  // nothing is required any more
 }
 
 export interface OptionalConfig {
@@ -43,28 +38,12 @@ export interface OptionalConfig {
   columnOptions: ColumnOptions;
   schemaJSDoc: boolean;
   unprefixedSchema: string | null;
+  nameTransforms: false | 'snakeCamel' | TsNameTransforms ;
   customJSONParsingForLargeNumbers: boolean;
 }
 
-interface SchemaRules {
-  [schema: string]: {
-    include: '*' | string[];
-    exclude: '*' | string[];
-  };
-}
-
-interface ColumnOptions {
-  [k: string]: {  // table name or "*"
-    [k: string]: {  // column name
-      insert?: 'auto' | 'excluded' | 'optional';
-      update?: 'auto' | 'excluded';
-    };
-  };
-  nameTransforms: TsNameTransforms | boolean;
-}
-
-export type Config = RequiredConfig & Partial<OptionalConfig>;
-export type CompleteConfig = RequiredConfig & OptionalConfig & { nameTransforms: TsNameTransforms };
+export type Config = Partial<OptionalConfig>;
+export type CompleteConfig = Omit<OptionalConfig, 'nameTransforms'> & { nameTransforms: TsNameTransforms };
 
 const defaultConfig: Config = {
   outDir: '.',
@@ -81,18 +60,6 @@ const defaultConfig: Config = {
   nameTransforms: false,
 };
 
-export const finaliseConfig = (config: Config) => {
-  const finalConfig = { ...defaultConfig, ...config };
-
-  finalConfig.nameTransforms =
-    finalConfig.nameTransforms === false ? nullTransforms.ts :
-      finalConfig.nameTransforms === true ? snakeCamelTransforms.ts :
-        finalConfig.nameTransforms;
-
-  if (!finalConfig.db || Object.keys(finalConfig.db).length < 1) throw new Error(`Zapatos needs database connection details`);
-  return finalConfig as CompleteConfig;
-};
-
 export const moduleRoot = () => {
   // __dirname could be either ./generate (ts) or ./dist/generate (js)
   const parentDir = path.join(__dirname, '..');
@@ -102,6 +69,7 @@ export const moduleRoot = () => {
 };
 
 export const finaliseConfig = (config: Config) => {
-  const finalConfig = { ...defaultConfig, ...config };
-  return finalConfig as CompleteConfig;
+  const mergedConfig: Config = {...defaultConfig, ...config};
+  const nameTransforms = mergedConfig.nameTransforms === 'snakeCamel' ? snakeCamelTransforms.ts: nullTransforms.ts;
+  return {...mergedConfig, nameTransforms} as CompleteConfig;
 };

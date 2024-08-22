@@ -60,8 +60,9 @@ export const nullTransforms: NameTransforms = {
         )})`,
       allColumnsJSON: (table) => sql`to_jsonb(${table}.*)`,
     },
-  },
-  snakeCamelTransforms: NameTransforms = {
+  };
+
+export const snakeCamelTransforms: NameTransforms = {
     ts: {
       fromPgToTs: snakeToCamelFn,
       fromTsToPg: camelToSnakeFn,

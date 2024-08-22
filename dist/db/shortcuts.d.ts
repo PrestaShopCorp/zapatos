@@ -1,5 +1,5 @@
 import type { JSONSelectableForTable, WhereableForTable, InsertableForTable, UpdatableForTable, ColumnForTable, UniqueIndexForTable, SQLForTable, Table } from "zapatos/schema";
-import { AllType, SQLFragment } from "./core";
+import { AllType, all, SQLFragment } from "./core";
 import { NoInfer } from "./utils";
 export type JSONOnlyColsForTable<T extends Table, C extends any[]> = Pick<JSONSelectableForTable<T>, C[number]>;
 export interface SQLFragmentMap {
@@ -8,7 +8,7 @@ export interface SQLFragmentMap {
 export interface SQLFragmentOrColumnMap<T extends Table> {
     [k: string]: SQLFragment<any> | ColumnForTable<T>;
 }
-export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? RunResult : never;
+export type RunResultForSQLFragment<T extends SQLFragment<any, any>> = T extends SQLFragment<infer RunResult, any> ? (undefined extends RunResult ? NonNullable<RunResult> | null : RunResult) : never;
 export type LateralResult<L extends SQLFragmentMap> = {
     [K in keyof L]: RunResultForSQLFragment<L[K]>;
 };
@@ -59,8 +59,8 @@ interface UpsertOptions<T extends Table, C extends ColumnsOption<T>, E extends E
     updateValues?: UpdatableForTable<T>;
     updateColumns?: UC;
     updateWhere?: WhereableForTable<T> | SQLFragment<any>;
-    noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[];
-    noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+    noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
+    noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
     reportAction?: RA;
 }
 interface UpsertSignatures {

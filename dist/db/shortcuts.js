@@ -1,11 +1,12 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.nested = exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.selectExactlyOne = exports.selectOne = exports.select = exports.NotExactlyOneError = exports.SelectResultMode = exports.truncate = exports.deletes = exports.update = exports.upsert = exports.doNothing = exports.constraint = exports.Constraint = exports.insert = void 0;
+exports.nested = exports.max = exports.min = exports.avg = exports.sum = exports.count = exports.selectExactlyOne = exports.selectOne = exports.select = exports.NotExactlyOneError = exports.SelectResultMode = exports.truncate = exports.deletes = exports.update = exports.upsert = exports.doNothing = exports.Constraint = exports.insert = void 0;
+exports.constraint = constraint;
 const core_1 = require("./core");
 const utils_1 = require("./utils");
 const config = (0, core_1.getConfig)();
@@ -65,7 +66,6 @@ exports.Constraint = Constraint;
 function constraint(x) {
     return new Constraint(x);
 }
-exports.constraint = constraint;
 exports.doNothing = [];
 /**
  * Generate an 'upsert' (`INSERT ... ON CONFLICT ...`) query `SQLFragment`.
@@ -87,11 +87,11 @@ const upsert = function (table, values, conflictTarget, options) {
     if (typeof conflictTarget === "string")
         conflictTarget = [conflictTarget]; // now either Column[] or Constraint
     let noNullUpdateColumns = (_a = options === null || options === void 0 ? void 0 : options.noNullUpdateColumns) !== null && _a !== void 0 ? _a : [];
-    if (!Array.isArray(noNullUpdateColumns)) {
+    if (noNullUpdateColumns !== core_1.all && !Array.isArray(noNullUpdateColumns)) {
         noNullUpdateColumns = [noNullUpdateColumns];
     }
     let noUpdateOnDataExistColumns = (_b = options === null || options === void 0 ? void 0 : options.noUpdateOnDataExistColumns) !== null && _b !== void 0 ? _b : [];
-    if (!Array.isArray(noUpdateOnDataExistColumns)) {
+    if (noUpdateOnDataExistColumns !== core_1.all && !Array.isArray(noUpdateOnDataExistColumns)) {
         noUpdateOnDataExistColumns = [noUpdateOnDataExistColumns];
     }
     let specifiedUpdateColumns = options === null || options === void 0 ? void 0 : options.updateColumns;
@@ -110,9 +110,9 @@ const upsert = function (table, values, conflictTarget, options) {
         ? (0, core_1.sql) `(${(0, utils_1.mapWithSeparator)(conflictTarget, (0, core_1.sql) `, `, (c) => c)})`
         : (0, core_1.sql) `ON CONSTRAINT ${conflictTarget.value}`, updateColsSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, (c) => c), updateValuesSQL = (0, utils_1.mapWithSeparator)(updateColumns, (0, core_1.sql) `, `, (c) => updateValues[c] !== undefined
         ? updateValues[c]
-        : noNullUpdateColumns.includes(c)
+        : (noNullUpdateColumns === core_1.all || noNullUpdateColumns.includes(c))
             ? (0, core_1.sql) `CASE WHEN EXCLUDED.${c} IS NULL THEN ${table}.${c} ELSE EXCLUDED.${c} END`
-            : noUpdateOnDataExistColumns.includes(c)
+            : (noUpdateOnDataExistColumns === core_1.all || noUpdateOnDataExistColumns.includes(c))
                 ? (0, core_1.sql) `CASE WHEN ${table}.${c} IS NULL THEN EXCLUDED.${c} ELSE${table}.${c} END`
                 : (0, core_1.sql) `EXCLUDED.${c}`), returningSQL = SQLForColumnsOfTable(options === null || options === void 0 ? void 0 : options.returning, table), extrasSQL = SQLForExtras(options === null || options === void 0 ? void 0 : options.extras), suppressReport = (options === null || options === void 0 ? void 0 : options.reportAction) === "suppress";
     // the added-on $action = 'INSERT' | 'UPDATE' key takes after SQL Server's approach to MERGE
@@ -178,7 +178,7 @@ var SelectResultMode;
     SelectResultMode[SelectResultMode["BooleanArray"] = 7] = "BooleanArray";
     SelectResultMode[SelectResultMode["NumberArray"] = 8] = "NumberArray";
     SelectResultMode[SelectResultMode["StringArray"] = 9] = "StringArray";
-})(SelectResultMode = exports.SelectResultMode || (exports.SelectResultMode = {}));
+})(SelectResultMode || (exports.SelectResultMode = SelectResultMode = {}));
 class NotExactlyOneError extends Error {
     constructor(query, ...params) {
         super(...params);

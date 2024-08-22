@@ -1,7 +1,7 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
@@ -58,7 +58,8 @@ const columnsForRelation = async (rel, schemaName, transforms, queryFn) => {
         LEFT JOIN pg_catalog.pg_type t1 ON t1.oid = a.atttypid
         LEFT JOIN pg_catalog.pg_type t2 ON t2.oid = t1.typbasetype
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = c.oid AND d.objsubid = a.attnum
-        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2`
+        WHERE c.relkind = 'm' AND a.attnum >= 1 AND c.relname = $1 AND n.nspname = $2
+        ORDER BY "column"`
             : `
         SELECT
           column_name AS "column"
@@ -73,7 +74,9 @@ const columnsForRelation = async (rel, schemaName, transforms, queryFn) => {
         LEFT JOIN pg_catalog.pg_namespace ns ON ns.nspname = c.table_schema
         LEFT JOIN pg_catalog.pg_class cl ON cl.relkind = 'r' AND cl.relname = c.table_name AND cl.relnamespace = ns.oid
         LEFT JOIN pg_catalog.pg_description d ON d.objoid = cl.oid AND d.objsubid = c.ordinal_position
-        WHERE c.table_name = $1 AND c.table_schema = $2`,
+        WHERE c.table_name = $1 AND c.table_schema = $2
+
+ORDER BY "column"`,
         values: [transforms.fromTsToPg(rel.name), transforms.fromTsToPg(schemaName)],
     });
     return rows.map(row => ({
@@ -91,7 +94,7 @@ config, queryFn) => {
     rows.forEach(row => {
         var _a;
         const { column, isGenerated, isNullable, hasDefault, udtName, domainName } = row, transformedName = config.nameTransforms.fromPgToTs(udtName);
-        let selectableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Selectable'), JSONSelectableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'JSONSelectable'), whereableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Whereable'), insertableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Insertable'), updatableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Updatable');
+        let selectableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Selectable', config), JSONSelectableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'JSONSelectable', config), whereableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Whereable', config), insertableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Insertable', config), updatableType = (0, pgTypes_1.tsTypeForPgType)(udtName, transformedName, enums, 'Updatable', config);
         const columnDoc = createColumnDoc(config, schemaName, rel, row), schemaPrefix = config.unprefixedSchema === schemaName ? '' : `${schemaName}.`, prefixedRelName = schemaPrefix + rel.name, columnOptions = (_a = (config.columnOptions[prefixedRelName] && config.columnOptions[prefixedRelName][column])) !== null && _a !== void 0 ? _a : (config.columnOptions["*"] && config.columnOptions["*"][column]), isInsertable = rel.insertable && !isGenerated && (columnOptions === null || columnOptions === void 0 ? void 0 : columnOptions.insert) !== 'excluded', isUpdatable = rel.insertable && !isGenerated && (columnOptions === null || columnOptions === void 0 ? void 0 : columnOptions.update) !== 'excluded', insertablyOptional = isNullable || hasDefault || (columnOptions === null || columnOptions === void 0 ? void 0 : columnOptions.insert) === 'optional' ? '?' : '', orNull = isNullable ? ' | null' : '', orDefault = isNullable || hasDefault ? ' | db.DefaultType' : '', possiblyQuotedColumn = quoteIfIllegalIdentifier(column);
         // Now, 4 cases: 
         //   1. null domain, known udt        <-- standard case

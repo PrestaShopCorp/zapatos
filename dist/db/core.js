@@ -1,11 +1,18 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SQLFragment = exports.sql = exports.parent = exports.ParentColumn = exports.vals = exports.ColumnValues = exports.cols = exports.ColumnNames = exports.raw = exports.DangerousRawString = exports.param = exports.Parameter = exports.toBuffer = exports.strict = exports.all = exports.self = exports.Default = exports.setConfig = exports.getConfig = exports.snakeCamelTransforms = exports.nullTransforms = void 0;
+exports.SQLFragment = exports.ParentColumn = exports.ColumnValues = exports.ColumnNames = exports.DangerousRawString = exports.Parameter = exports.toBuffer = exports.all = exports.self = exports.Default = exports.setConfig = exports.getConfig = exports.snakeCamelTransforms = exports.nullTransforms = void 0;
+exports.strict = strict;
+exports.param = param;
+exports.raw = raw;
+exports.cols = cols;
+exports.vals = vals;
+exports.parent = parent;
+exports.sql = sql;
 const utils_1 = require("./utils");
 const timing = typeof performance === "object" ? () => performance.now() : () => Date.now();
 const snakeToCamelFn = (s) => s.replace(/_[a-z]/g, (m) => m.charAt(1).toUpperCase()), camelToSnakeFn = (s) => s.replace(/[A-Z]/g, (m) => "_" + m.toLowerCase()), snakeToCamelSQL = (s) => sql `(
@@ -26,7 +33,8 @@ exports.nullTransforms = {
         namedColumnsJSON: (columns) => sql `jsonb_build_object(${(0, utils_1.mapWithSeparator)(columns, sql `, `, (c) => sql `${param(c)}::text, ${c}`)})`,
         allColumnsJSON: (table) => sql `to_jsonb(${table}.*)`,
     },
-}, exports.snakeCamelTransforms = {
+};
+exports.snakeCamelTransforms = {
     ts: {
         fromPgToTs: snakeToCamelFn,
         fromTsToPg: camelToSnakeFn,
@@ -104,7 +112,6 @@ function strict(fn) {
         return (d === null ? null : fn(d));
     };
 }
-exports.strict = strict;
 /**
  * Convert a `bytea` hex representation to a JavaScript `Buffer`. Note: for
  * large objects, use something like
@@ -148,7 +155,6 @@ exports.Parameter = Parameter;
 function param(x, cast) {
     return new Parameter(x, cast);
 }
-exports.param = param;
 /**
  * 💥💥💣 **DANGEROUS** 💣💥💥
  *
@@ -174,7 +180,6 @@ exports.DangerousRawString = DangerousRawString;
 function raw(x) {
     return new DangerousRawString(x);
 }
-exports.raw = raw;
 /**
  * Wraps either an array or object, and compiles to a quoted, comma-separated
  * list of array values (for use in a `SELECT` query) or object keys (for use
@@ -195,7 +200,6 @@ exports.ColumnNames = ColumnNames;
 function cols(x) {
     return new ColumnNames(x);
 }
-exports.cols = cols;
 /**
  * Compiles to a quoted, comma-separated list of object keys for use in an
  * `INSERT`, `UPDATE` or `UPSERT` query, alongside `ColumnNames`.
@@ -214,7 +218,6 @@ exports.ColumnValues = ColumnValues;
 function vals(x) {
     return new ColumnValues(x);
 }
-exports.vals = vals;
 /**
  * Compiles to the name of the column it wraps in the table of the parent query.
  * @param value The column name
@@ -232,7 +235,6 @@ exports.ParentColumn = ParentColumn;
 function parent(x) {
     return new ParentColumn(x);
 }
-exports.parent = parent;
 // === SQL tagged template strings ===
 /**
  * Tagged template function returning a `SQLFragment`. The first generic type
@@ -243,7 +245,6 @@ exports.parent = parent;
 function sql(literals, ...expressions) {
     return new SQLFragment(Array.prototype.slice.apply(literals), expressions);
 }
-exports.sql = sql;
 let preparedNameSeq = 0;
 class SQLFragment {
     constructor(literals, expressions) {

@@ -1,4 +1,3 @@
-/// <reference types="node" />
 import type * as pg from "pg";
 import { NoInfer } from "./utils";
 import type { Updatable, Whereable, Table, Column } from "zapatos/schema";
@@ -16,7 +15,8 @@ export interface NameTransforms {
     ts: TsNameTransforms;
     pg: PgNameTransforms;
 }
-export declare const nullTransforms: NameTransforms, snakeCamelTransforms: NameTransforms;
+export declare const nullTransforms: NameTransforms;
+export declare const snakeCamelTransforms: NameTransforms;
 export interface SQLQuery {
     text: string;
     values: any[];
@@ -71,9 +71,10 @@ export type JSONObject = {
 };
 export type JSONArray = JSONValue[];
 /**
- * `int8` value represented as a string
+ * `int8` or `numeric` value represented as a string
  */
 export type Int8String = `${number}`;
+export type NumericString = `${number}`;
 /**
  * Generic range value represented as a string
  */
@@ -137,8 +138,8 @@ export declare const toBuffer: <T extends `\\x${string}` | null>(d: T) => T exte
  */
 export declare class Parameter<T = any> {
     value: T;
-    cast?: string | boolean | undefined;
-    constructor(value: T, cast?: string | boolean | undefined);
+    cast?: (boolean | string) | undefined;
+    constructor(value: T, cast?: (boolean | string) | undefined);
 }
 /**
  * Returns a `Parameter` instance, which compiles to a numbered query parameter

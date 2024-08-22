@@ -238,7 +238,7 @@ interface UpsertOptions<
   updateColumns?: UC;
   updateWhere?: WhereableForTable<T> | SQLFragment<any>;
   noNullUpdateColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
-  noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[];
+  noUpdateOnDataExistColumns?: ColumnForTable<T> | ColumnForTable<T>[] | typeof all;
   reportAction?: RA;
 }
 
@@ -310,7 +310,7 @@ export const upsert: UpsertSignatures = function (
   }
 
   let noUpdateOnDataExistColumns = options?.noUpdateOnDataExistColumns ?? [];
-  if (!Array.isArray(noUpdateOnDataExistColumns)) {
+  if (noUpdateOnDataExistColumns !== all && !Array.isArray(noUpdateOnDataExistColumns)) {
     noUpdateOnDataExistColumns = [noUpdateOnDataExistColumns];
   }
 

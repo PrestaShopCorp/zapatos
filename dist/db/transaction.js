@@ -1,11 +1,19 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.serializableRODeferrable = exports.readCommittedRO = exports.repeatableReadRO = exports.serializableRO = exports.readCommitted = exports.repeatableRead = exports.serializable = exports.transaction = exports.IsolationLevel = void 0;
+exports.IsolationLevel = void 0;
+exports.transaction = transaction;
+exports.serializable = serializable;
+exports.repeatableRead = repeatableRead;
+exports.readCommitted = readCommitted;
+exports.serializableRO = serializableRO;
+exports.repeatableReadRO = repeatableReadRO;
+exports.readCommittedRO = readCommittedRO;
+exports.serializableRODeferrable = serializableRODeferrable;
 const pg = require("pg");
 const pgErrors_1 = require("./pgErrors");
 const utils_1 = require("./utils");
@@ -21,7 +29,7 @@ var IsolationLevel;
     IsolationLevel["RepeatableReadRO"] = "REPEATABLE READ, READ ONLY";
     IsolationLevel["ReadCommittedRO"] = "READ COMMITTED, READ ONLY";
     IsolationLevel["SerializableRODeferrable"] = "SERIALIZABLE, READ ONLY, DEFERRABLE";
-})(IsolationLevel = exports.IsolationLevel || (exports.IsolationLevel = {}));
+})(IsolationLevel || (exports.IsolationLevel = IsolationLevel = {}));
 function typeofQueryable(queryable) {
     if (queryable instanceof pg.Pool)
         return 'pool';
@@ -102,7 +110,6 @@ async function transaction(txnClientOrQueryable, isolationLevel, callback) {
             txnClient.release();
     }
 }
-exports.transaction = transaction;
 /**
  * Shortcut for `transaction` with isolation level `Serializable`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -113,7 +120,6 @@ exports.transaction = transaction;
 async function serializable(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.Serializable, callback);
 }
-exports.serializable = serializable;
 /**
  * Shortcut for `transaction` with isolation level `RepeatableRead`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -124,7 +130,6 @@ exports.serializable = serializable;
 async function repeatableRead(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.RepeatableRead, callback);
 }
-exports.repeatableRead = repeatableRead;
 /**
  * Shortcut for `transaction` with isolation level `ReadCommitted`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -135,7 +140,6 @@ exports.repeatableRead = repeatableRead;
 async function readCommitted(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.ReadCommitted, callback);
 }
-exports.readCommitted = readCommitted;
 /**
  * Shortcut for `transaction` with isolation level `SerializableRO`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -146,7 +150,6 @@ exports.readCommitted = readCommitted;
 async function serializableRO(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.SerializableRO, callback);
 }
-exports.serializableRO = serializableRO;
 /**
  * Shortcut for `transaction` with isolation level `RepeatableReadRO`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -157,7 +160,6 @@ exports.serializableRO = serializableRO;
 async function repeatableReadRO(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.RepeatableReadRO, callback);
 }
-exports.repeatableReadRO = repeatableReadRO;
 /**
  * Shortcut for `transaction` with isolation level `ReadCommittedRO`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -168,7 +170,6 @@ exports.repeatableReadRO = repeatableReadRO;
 async function readCommittedRO(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.ReadCommittedRO, callback);
 }
-exports.readCommittedRO = readCommittedRO;
 /**
  * Shortcut for `transaction` with isolation level `SerializableRODeferrable`.
  * @param txnClientOrQueryable The `pg.Pool` from which to check out a client,
@@ -179,4 +180,3 @@ exports.readCommittedRO = readCommittedRO;
 async function serializableRODeferrable(txnClientOrQueryable, callback) {
     return transaction(txnClientOrQueryable, IsolationLevel.SerializableRODeferrable, callback);
 }
-exports.serializableRODeferrable = serializableRODeferrable;

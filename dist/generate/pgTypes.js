@@ -1,21 +1,32 @@
 "use strict";
 /*
 Zapatos: https://jawj.github.io/zapatos/
-Copyright (C) 2020 - 2022 George MacKerron
+Copyright (C) 2020 - 2023 George MacKerron
 Released under the MIT licence: see LICENCE file
 */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.tsTypeForPgType = void 0;
-const baseTsTypeForBasePgType = (pgType, tsType, enums, context) => {
-    const hasOwnProp = Object.prototype.hasOwnProperty;
+let warnedAboutInt8AndNumeric = false;
+const baseTsTypeForBasePgType = (pgType, tsType, enums, context, config) => {
+    const hasOwnProp = Object.prototype.hasOwnProperty, warn = config.warningListener === true ? console.log : config.warningListener || (() => void 0);
+    function warnAboutLargeNumbers() {
+        if (warnedAboutInt8AndNumeric || config.customJSONParsingForLargeNumbers)
+            return;
+        warn(`Note: this database has bigint/int8 and/or numeric/decimal columns, for which JSON.parse may lose precision. Please read the docs: https://jawj.github.io/zapatos/#custom-json-parsing-for-bigint-and-numeric`);
+        warnedAboutInt8AndNumeric = true;
+    }
     switch (pgType) {
         case 'money':
             return context === 'JSONSelectable' || context === 'Selectable' ? 'string' :
                 '(number | string)';
         case 'int8':
-            return context === 'JSONSelectable' ? 'number' :
-                context === 'Selectable' ? 'db.Int8String' :
-                    '(number | db.Int8String)';
+            warnAboutLargeNumbers();
+            return context === 'JSONSelectable' ? (config.customJSONParsingForLargeNumbers ? '(number | db.Int8String)' : 'number') :
+                context === 'Selectable' ? 'db.Int8String' : '(number | db.Int8String | bigint)';
+        case 'numeric':
+            warnAboutLargeNumbers();
+            return context === 'JSONSelectable' ? (config.customJSONParsingForLargeNumbers ? '(number | db.NumericString)' : 'number') :
+                context === 'Selectable' ? 'db.NumericString' : '(number | db.NumericString)';
         case 'bytea':
             return context === 'JSONSelectable' ? 'db.ByteArrayString' :
                 context === 'Selectable' ? 'Buffer' :
@@ -58,7 +69,6 @@ const baseTsTypeForBasePgType = (pgType, tsType, enums, context) => {
         case 'int4':
         case 'float4':
         case 'float8':
-        case 'numeric':
         case 'oid':
             return 'number';
         case 'bool':
@@ -72,15 +82,15 @@ const baseTsTypeForBasePgType = (pgType, tsType, enums, context) => {
             return null;
     }
 };
-const tsTypeForPgType = (pgType, tsType, enums, context) => {
+const tsTypeForPgType = (pgType, tsType, enums, context, config) => {
     // basic and enum types (enum names can begin with an underscore even if not an array)
-    const baseTsType = baseTsTypeForBasePgType(pgType, tsType, enums, context);
+    const baseTsType = baseTsTypeForBasePgType(pgType, tsType, enums, context, config);
     if (baseTsType !== null)
         return baseTsType;
     // arrays of basic and enum types: pg prefixes these with underscore (_)
     // see https://www.postgresql.org/docs/current/sql-createtype.html#id-1.9.3.94.5.9
     if (pgType.charAt(0) === '_') {
-        const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), tsType, enums, context);
+        const arrayTsType = baseTsTypeForBasePgType(pgType.slice(1), tsType, enums, context, config);
         if (arrayTsType !== null)
             return arrayTsType + '[]';
     }
